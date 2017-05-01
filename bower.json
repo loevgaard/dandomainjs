@@ -1,0 +1,21 @@
+{
+  "name": "dandomainjs",
+  "homepage": "https://github.com/loevgaard/dandomainjs",
+  "authors": [
+    "Joachim Løvgaard <joachim@loevgaard.dk>"
+  ],
+  "description": "A JavaScript library for Dandomain webshops",
+  "keywords": [
+    "dandomain",
+    "js",
+    "library"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
