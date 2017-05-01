@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Dandomain JS Tests</title>
+
+        <link rel="stylesheet" href="../bower_components/qunit/qunit/qunit.css">
+        <script src="../bower_components/jquery/jquery.min.js"></script>
+        <script src="../bower_components/qunit/qunit/qunit.js"></script>
+        <script src="../src/dandomainjs.js"></script>
+        <script src="../src/dandomainjs.gtm.js"></script>
+        <script src="../src/dandomainjs.gtm.ecommerce.js"></script>
+
+        <script>
+            QUnit.test("Page Methods", function(assert) {
+                assert.equal(dandomainjs.page.isFrontpage('/shop/frontpage.html'), true);
+                assert.equal(dandomainjs.page.isProduct('/shop/foobar-123p.html'), true);
+                assert.equal(dandomainjs.page.isProductList('/shop/foobar-123c1.html'), true);
+                assert.equal(dandomainjs.page.isProductList('/shop/foobar-123s1.html'), true);
+                assert.equal(dandomainjs.page.isCart('/shop/showbasket.html'), true);
+                assert.equal(dandomainjs.page.isPurchase('/shop/order4.html'), true);
+
+                assert.equal(dandomainjs.page.isFrontpage('/shop/wrong.html'), false);
+                assert.equal(dandomainjs.page.isProduct('/shop/wrong.html'), false);
+                assert.equal(dandomainjs.page.isProductList('/shop/wrong.html'), false);
+                assert.equal(dandomainjs.page.isProductList('/shop/wrong.html'), false);
+                assert.equal(dandomainjs.page.isCart('/shop/wrong.html'), false);
+                assert.equal(dandomainjs.page.isPurchase('/shop/wrong.html'), false);
+            });
+
+            QUnit.test("Ecommerce Product Impressions", function(assert) {
+                var impression = dandomainjs.gtm.ecommerce.createProductImpression('shoe-123', 'Adidas Power', 100.50, 'Adidas', 'Shoes', 'Black', 'Product List', 4);
+                var impressions = dandomainjs.gtm.ecommerce.createProductImpressions([impression]);
+                assert.deepEqual(impressions, {
+                    ecommerce: {
+                        impressions: [
+                            {
+                                brand: 'Adidas',
+                                category: 'Shoes',
+                                id: 'shoe-123',
+                                list: 'Product List',
+                                name: 'Adidas Power',
+                                position: 4,
+                                price: 100.5,
+                                variant: 'Black'
+                            }
+                        ]
+                    }
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="qunit"></div>
+    </body>
+</html>
