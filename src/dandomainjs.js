@@ -19,6 +19,19 @@
         this.eventManager.fire(dandomainjs.events.INIT);
     };
 
+    /**
+     * Takes a strings that resemble money, i.e.
+     *
+     * - 100,50
+     * - 100.50
+     * - 1.000,50
+     * - 1,000.50
+     *
+     * and transforms them into a float
+     *
+     * @param {String} money
+     * @return {number}
+     */
     dandomainjs.moneyToFloat = function (money) {
         return parseInt(money.replace(/[^0-9]+/ig, '')) / 100;
     };
@@ -133,6 +146,12 @@
         BASKET: 'basket',
         PURCHASE: 'purchase',
         SEARCH: 'search',
+        OTHER: 'other',
+        /**
+         * Returns the current page as a string
+         *
+         * @return String
+         */
         getCurrentPage: function () {
             if(this.isProduct()) {
                 return this.PRODUCT;
@@ -153,6 +172,8 @@
             if(this.isFrontpage()) {
                 return this.FRONTPAGE;
             }
+
+            return this.OTHER;
         },
         /**
          * Returns true if the current page is the frontpage (i.e. url contains /shop/frontpage.html)
