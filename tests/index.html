@@ -13,7 +13,7 @@
         <script src="../src/dandomainjs.facebook.js"></script>
 
         <script>
-            QUnit.test("Page Methods", function(assert) {
+            QUnit.test("Page and Utility Methods", function(assert) {
                 assert.equal(dandomainjs.page.isFrontpage('/shop/frontpage.html'), true);
                 assert.equal(dandomainjs.page.isProduct('/shop/foobar-123p.html'), true);
                 assert.equal(dandomainjs.page.isProductList('/shop/foobar-123c1.html'), true);
@@ -27,6 +27,8 @@
                 assert.equal(dandomainjs.page.isProductList('/shop/wrong.html'), false);
                 assert.equal(dandomainjs.page.isCart('/shop/wrong.html'), false);
                 assert.equal(dandomainjs.page.isPurchase('/shop/wrong.html'), false);
+
+                assert.equal(dandomainjs.moneyToFloat('1,000.50'), 1000.50);
             });
 
             QUnit.test("Ecommerce Product Impressions", function(assert) {

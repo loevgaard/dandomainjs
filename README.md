@@ -27,8 +27,8 @@ or download the files directly from the `src` directory.
 dandomainjs.init({
     languageIdToCurrency: {
         26: 'DKK',
-        27: 'SEK,
-        ...
+        27: 'SEK',
+        28: '...'
     }
 });
 </script>
