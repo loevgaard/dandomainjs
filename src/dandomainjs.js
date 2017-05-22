@@ -345,7 +345,7 @@
 
         var currentPageViewEvent = 'PAGE_VIEW_' + dandomainjs.page.getCurrentPage().toUpperCase();
         if(dandomainjs.events.hasOwnProperty(currentPageViewEvent)) {
-            dandomainjs.eventManager.fire(currentPageViewEvent);
+            dandomainjs.eventManager.fire(dandomainjs.events[currentPageViewEvent]);
         }
 
         if(window.AddedToBasketMessageTriggered) {
