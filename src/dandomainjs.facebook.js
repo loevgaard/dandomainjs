@@ -43,7 +43,7 @@
 
                     if(dandomainjs.page.isProduct()) {
                         contentType = 'product';
-                        contentIds = [dandomainjs.page.product.id()];
+                        contentIds = [dandomainjs.getters.page.product.id()];
                     } else if(dandomainjs.page.isCategory()) {
                         contentType = 'product';
                         dandomainjs.getters.page.category.products().forEach(function (product) {
