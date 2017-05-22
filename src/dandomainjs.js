@@ -2,6 +2,30 @@
     "use strict";
 
     var dandomainjs = {};
+
+    dandomainjs.languageIdToCurrency = {};
+
+    dandomainjs.init = function(options) {
+        if(options) {
+            if(options.hasOwnProperty('languageIdToCurrency')) {
+                dandomainjs.languageIdToCurrency = options.languageIdToCurrency;
+            } else {
+                console.error('The options object needs to have a languageIdToCurrency property which maps language ids to currencies');
+            }
+        } else {
+            console.error('You need to include an options object with the init method');
+        }
+
+        if(window.AddedToBasketMessageTriggered) {
+            dandomainjs.page.events.notifySubscribers(dandomainjs.page.events.names.ADD_TO_CART);
+        }
+
+        dandomainjs.page.notifySubscribers();
+    };
+
+    dandomainjs.moneyToFloat = function (money) {
+        return parseInt(money.replace(/[^0-9]+/ig, '')) / 100;
+    };
     
     dandomainjs.getters = {
         page: {
@@ -17,7 +41,7 @@
                     return $('h1:first').text();
                 },
                 price: function () {
-                    return parseInt($('[itemprop="price"]').text().replace(/[^0-9]+/ig, '')) / 100;
+                    return dandomainjs.moneyToFloat($('[itemprop="price"]').text());
                 },
                 brand: $.noop(),
                 category: $.noop(),
@@ -28,11 +52,92 @@
 
                     return window.ProductNumber.replace(window.ProductVariantMasterID + '-', '');
                 }
+            },
+            purchase: {
+                total: function () {
+                    return parseFloat($('#transaction-value').text());
+                }
             }
+        },
+        currency: function () {
+            if(!dandomainjs.languageIdToCurrency.hasOwnProperty(window.LanguageID)) {
+                console.error('No language id mapping for language id: ' + window.LanguageID);
+                return '';
+            }
+
+            return dandomainjs.languageIdToCurrency[window.LanguageID];
         }
     };
     
     dandomainjs.page = {
+        FRONTPAGE: 'frontpage',
+        PRODUCT: 'product',
+        PRODUCT_LIST: 'productList',
+        CART: 'basket',
+        BASKET: 'basket',
+        PURCHASE: 'purchase',
+        subscribers: {},
+        addSubscriber: function (page, fn) {
+            if(!this.subscribers.hasOwnProperty(page)) {
+                this.subscribers[page] = [];
+            }
+
+            this.subscribers[page].push(fn);
+        },
+        notifySubscribers: function () {
+            var currentPage = this.getCurrentPage();
+            if(!this.subscribers.hasOwnProperty(currentPage)) {
+                return;
+            }
+            this.subscribers[currentPage].forEach(function (subscriber) {
+                subscriber.call();
+            });
+        },
+        getCurrentPage: function () {
+            if(this.isProduct()) {
+                return this.PRODUCT;
+            }
+
+            if(this.isProductList()) {
+                return this.PRODUCT_LIST;
+            }
+
+            if(this.isBasket()) {
+                return this.BASKET;
+            }
+
+            if(this.isPurchase()) {
+                return this.PURCHASE;
+            }
+
+            if(this.isFrontpage()) {
+                return this.FRONTPAGE;
+            }
+        },
+        events: {
+            names: {
+                ADD_TO_CART: 'addToCart'
+            },
+            subscribers: {},
+            addSubscriber: function (event, fn) {
+                if(!this.subscribers.hasOwnProperty(event)) {
+                    this.subscribers[event] = [];
+                }
+
+                this.subscribers[event].push(fn);
+            },
+            notifySubscribers: function (event) {
+                if(!this.subscribers.hasOwnProperty(event)) {
+                    return;
+                }
+                this.subscribers[event].forEach(function (subscriber) {
+                    subscriber.call();
+                });
+            },
+            addToCart: function () {
+                this.notifySubscribers(this.names.ADD_TO_CART);
+            }
+        },
         /**
          * Returns true if the current page is the frontpage (i.e. url contains /shop/frontpage.html)
          *
@@ -73,12 +178,35 @@
         },
 
         /**
-         * Returns true if the current page is the cart (i.e. url contains /shop/showbasket.html)
+         * A search results pages (i.e. search-1.html)
+         *
+         * @param url
+         * @returns boolean
+         */
+        isSearch: function (url) {
+            if(!url) {
+                url = window.location.href;
+            }
+            return url.match(/search\-[0-9]+\.html/i) !== null;
+        },
+
+        /**
+         * This is an alias of isBasket
          *
          * @param url
          * @returns boolean
          */
         isCart: function (url) {
+            return this.isBasket(url);
+        },
+
+        /**
+         * Returns true if the current page is the basket (i.e. url contains /shop/showbasket.html)
+         *
+         * @param url
+         * @returns boolean
+         */
+        isBasket: function (url) {
             if(!url) {
                 url = window.location.href;
             }
