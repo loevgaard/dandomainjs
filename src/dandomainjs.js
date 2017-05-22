@@ -284,7 +284,7 @@
         Product.call(this, $container);
         
         this.getId = function () {
-            return $this.$container.find('input[name="ProductID"]').val();
+            return this.$container.find('input[name="ProductID"]').val();
         };
     };
 
