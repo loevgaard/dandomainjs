@@ -60,12 +60,13 @@
             }
         },
         currency: function () {
-            if(!dandomainjs.languageIdToCurrency.hasOwnProperty(window.LanguageID)) {
+            var languageId = parseInt(window.LanguageID);
+            if(!dandomainjs.languageIdToCurrency.hasOwnProperty(languageId)) {
                 console.error('No language id mapping for language id: ' + window.LanguageID);
                 return '';
             }
 
-            return dandomainjs.languageIdToCurrency[window.LanguageID];
+            return dandomainjs.languageIdToCurrency[languageId];
         }
     };
     

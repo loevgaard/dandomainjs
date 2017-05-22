@@ -57,8 +57,12 @@
         }
     };
 
-    dandomainjs.page.addSubscriber(dandomainjs.page.PURCHASE, dandomainjs.facebook.events.purchase());
-    dandomainjs.page.events.addSubscriber(dandomainjs.page.events.names.ADD_TO_CART, dandomainjs.facebook.events.addToCart());
+    dandomainjs.page.addSubscriber(dandomainjs.page.PURCHASE, function () {
+        dandomainjs.facebook.events.purchase();
+    });
+    dandomainjs.page.events.addSubscriber(dandomainjs.page.events.names.ADD_TO_CART, function () {
+        dandomainjs.facebook.events.addToCart();
+    });
 
     function initQueue() {
         if(!$.isArray(queue)) {
