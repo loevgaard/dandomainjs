@@ -1,9 +1,11 @@
 (function($, dandomainjs, window){
     "use strict";
 
-    var queue;
+    dandomainjs.events.FACEBOOK_PRE_PUSH = 'facebook_pre_push';
+    dandomainjs.events.FACEBOOK_POST_PUSH = 'facebook_post_push';
 
     dandomainjs.facebook = {
+        // see facebook events here: https://developers.facebook.com/docs/ads-for-websites/pixel-events/v2.9
         events: {
             addPaymentInfo: function (data) {
                 dandomainjs.facebook.pushEvent('AddPaymentInfo', data);
@@ -36,6 +38,36 @@
                 dandomainjs.facebook.pushEvent('Search', data);
             },
             viewContent: function (data) {
+                if(!data) {
+                    var contentType, contentIds = [], products = [];
+
+                    if(dandomainjs.page.isProduct()) {
+                        contentType = 'product';
+                        contentIds = [dandomainjs.page.product.id()];
+                    } else if(dandomainjs.page.isCategory()) {
+                        contentType = 'product';
+                        dandomainjs.getters.page.category.products().forEach(function (product) {
+                            contentIds.push(product.getId());
+                        });
+                    } else if(dandomainjs.page.isBasket()) {
+                        contentType = 'product';
+                        dandomainjs.getters.page.basket.products().forEach(function (product) {
+                            contentIds.push(product.getId());
+                        });
+                    } else if(dandomainjs.page.isPurchase()) {
+                        contentType = 'product';
+                        dandomainjs.getters.page.purchase.products().forEach(function (product) {
+                            contentIds.push(product.getId());
+                        });
+                    }
+
+                    if(contentType) {
+                        data = {
+                            content_type: contentType,
+                            content_ids: contentIds
+                        };
+                    }
+                }
                 dandomainjs.facebook.pushEvent('ViewContent', data);
             }
         },
@@ -44,6 +76,7 @@
                 console.error('No event supplied');
                 return false;
             }
+            dandomainjs.eventManager.fire(dandomainjs.events.FACEBOOK_PRE_PUSH, [event, data]);
             if(window.hasOwnProperty('fbq')) {
                 fbq('track', event, data);
             } else {
@@ -53,22 +86,30 @@
                     data: data
                 });
             }
+            dandomainjs.eventManager.fire(dandomainjs.events.FACEBOOK_POST_PUSH, [event, data]);
 
         }
     };
 
-    dandomainjs.page.addSubscriber(dandomainjs.page.PURCHASE, function () {
+    dandomainjs.eventManager.addListener(dandomainjs.events.PAGE_VIEW, function () {
+        dandomainjs.facebook.events.viewContent();
+    });
+    dandomainjs.eventManager.addListener(dandomainjs.events.PAGE_VIEW_PURCHASE, function () {
         dandomainjs.facebook.events.purchase();
     });
-    dandomainjs.page.events.addSubscriber(dandomainjs.page.events.names.ADD_TO_CART, function () {
+    dandomainjs.eventManager.addListener(dandomainjs.events.ADD_TO_CART, function () {
         dandomainjs.facebook.events.addToCart();
     });
 
+    var queue, interval;
     function initQueue() {
+        if(interval !== undefined) {
+            return;
+        }
         if(!$.isArray(queue)) {
             queue = [];
         }
-        setInterval(function () {
+        interval = setInterval(function () {
             if(!queue.length) {
                 return;
             }

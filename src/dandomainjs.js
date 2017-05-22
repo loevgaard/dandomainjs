@@ -16,19 +16,61 @@
             console.error('You need to include an options object with the init method');
         }
 
-        if(window.AddedToBasketMessageTriggered) {
-            dandomainjs.page.events.notifySubscribers(dandomainjs.page.events.names.ADD_TO_CART);
-        }
-
-        dandomainjs.page.notifySubscribers();
+        this.eventManager.fire(dandomainjs.events.INIT);
     };
 
     dandomainjs.moneyToFloat = function (money) {
         return parseInt(money.replace(/[^0-9]+/ig, '')) / 100;
     };
-    
+
+    dandomainjs.events = {
+        INIT: 'init',
+        PAGE_VIEW: 'page_view',
+        PAGE_VIEW_FRONTPAGE: 'page_view_frontpage',
+        PAGE_VIEW_PRODUCT: 'page_view_product',
+        PAGE_VIEW_CATEGORY: 'page_view_category',
+        PAGE_VIEW_BASKET: 'page_view_basket',
+        PAGE_VIEW_SEARCH: 'page_view_search',
+        PAGE_VIEW_PURCHASE: 'page_view_purchase',
+        ADD_TO_CART: 'add_to_cart'
+    };
+
+    dandomainjs.selectors = {
+        page: {
+            basket: {
+                product: 'ul.ShowBasket_Custom_UL li'
+            },
+            category: {
+                product: 'ul.ProductList_Custom_UL li'
+            },
+            purchase: {
+                product: 'tr.BasketLine_OrderStep4'
+            }
+        }
+    };
+
     dandomainjs.getters = {
         page: {
+            basket: {
+                products: function () {
+                    var products = [];
+                    $(dandomainjs.selectors.page.basket.product).each(function () {
+                        products.push(new window.BasketProduct($(this)));
+                    });
+
+                    return products;
+                }
+            },
+            category: {
+                products: function () {
+                    var products = [];
+                    $(dandomainjs.selectors.page.category.product).each(function () {
+                        products.push(new window.CategoryProduct($(this)));
+                    });
+
+                    return products;
+                }
+            },
             product: {
                 id: function () {
                     if(window.ProductVariantMasterID) {
@@ -54,8 +96,20 @@
                 }
             },
             purchase: {
+                products: function () {
+                    var products = [];
+                    $(dandomainjs.selectors.page.purchase.product).each(function () {
+                        products.push(new window.PurchaseProduct($(this)));
+                    });
+
+                    return products;
+                },
                 total: function () {
-                    return parseFloat($('#transaction-value').text());
+                    var $obj = $('#transaction-value');
+                    if(!$obj.length) {
+                        console.error('You need to add this tag to the code field on step 4: <div id="transaction-value" style="display:none">[[AdWordsSubTotalInclVAT]]</div>');
+                    }
+                    return parseFloat($obj.text());
                 }
             }
         },
@@ -73,27 +127,12 @@
     dandomainjs.page = {
         FRONTPAGE: 'frontpage',
         PRODUCT: 'product',
-        PRODUCT_LIST: 'productList',
+        PRODUCT_LIST: 'category',
+        CATEGORY: 'category',
         CART: 'basket',
         BASKET: 'basket',
         PURCHASE: 'purchase',
-        subscribers: {},
-        addSubscriber: function (page, fn) {
-            if(!this.subscribers.hasOwnProperty(page)) {
-                this.subscribers[page] = [];
-            }
-
-            this.subscribers[page].push(fn);
-        },
-        notifySubscribers: function () {
-            var currentPage = this.getCurrentPage();
-            if(!this.subscribers.hasOwnProperty(currentPage)) {
-                return;
-            }
-            this.subscribers[currentPage].forEach(function (subscriber) {
-                subscriber.call();
-            });
-        },
+        SEARCH: 'search',
         getCurrentPage: function () {
             if(this.isProduct()) {
                 return this.PRODUCT;
@@ -113,30 +152,6 @@
 
             if(this.isFrontpage()) {
                 return this.FRONTPAGE;
-            }
-        },
-        events: {
-            names: {
-                ADD_TO_CART: 'addToCart'
-            },
-            subscribers: {},
-            addSubscriber: function (event, fn) {
-                if(!this.subscribers.hasOwnProperty(event)) {
-                    this.subscribers[event] = [];
-                }
-
-                this.subscribers[event].push(fn);
-            },
-            notifySubscribers: function (event) {
-                if(!this.subscribers.hasOwnProperty(event)) {
-                    return;
-                }
-                this.subscribers[event].forEach(function (subscriber) {
-                    subscriber.call();
-                });
-            },
-            addToCart: function () {
-                this.notifySubscribers(this.names.ADD_TO_CART);
             }
         },
         /**
@@ -166,12 +181,22 @@
         },
 
         /**
-         * A product list is either a category page (.*-1234c1.html) or a category page with sub categories (.*-1234s1.html)
+         * Alias to isCategory
          *
          * @param url
          * @returns boolean
          */
         isProductList: function (url) {
+            return this.isCategory(url);
+        },
+
+        /**
+         * A category is either a category page (.*-1234c1.html) or a category page with sub categories (.*-1234s1.html)
+         *
+         * @param url
+         * @returns boolean
+         */
+        isCategory: function (url) {
             if(!url) {
                 url = window.location.href;
             }
@@ -227,6 +252,85 @@
             return url.match(/\/shop\/order4\.html/i) !== null;
         }
     };
+
+    dandomainjs.eventManager = {
+        listeners: {},
+        addListener: function (name, fn) {
+            if(!this.listeners.hasOwnProperty(name)) {
+                this.listeners[name] = [];
+            }
+
+            this.listeners[name].push(fn);
+        },
+        // @todo implement removeListener method
+        fire: function (name, args) {
+            if(!this.listeners.hasOwnProperty(name)) {
+                return;
+            }
+
+            this.listeners[name].forEach(function (listener) {
+                listener.apply(window, args || []);
+            });
+        }
+    };
+
+    // base product
+    window.Product = function ($container) {
+        this.$container = $container;
+    };
+
+    // category product
+    window.CategoryProduct = function ($container) {
+        Product.call(this, $container);
+        
+        this.getId = function () {
+            return $this.$container.find('input[name="ProductID"]').val();
+        };
+    };
+
+    window.CategoryProduct.prototype = Object.create(window.Product.prototype);
+    window.CategoryProduct.prototype.constructor = window.CategoryProduct;
+
+    // basket product
+    window.BasketProduct = function ($container) {
+        Product.call(this, $container);
+
+        this.getId = function () {
+            return this.$container.find('.product-number').text();
+        };
+    };
+
+    window.BasketProduct.prototype = Object.create(window.Product.prototype);
+    window.BasketProduct.prototype.constructor = window.BasketProduct;
+
+    // purchase product
+    window.PurchaseProduct = function ($container) {
+        Product.call(this, $container);
+
+        this.getId = function () {
+            return this.$container.find("td:eq(2)").text();
+        };
+
+        this.getTotal = function () {
+            return dandomainjs.moneyToFloat(this.$container.find("td:eq(6)").text());
+        };
+    };
+
+    window.PurchaseProduct.prototype = Object.create(window.Product.prototype);
+    window.PurchaseProduct.prototype.constructor = window.PurchaseProduct;
+
+    $(function() {
+        dandomainjs.eventManager.fire(dandomainjs.events.PAGE_VIEW);
+
+        var currentPageViewEvent = 'PAGE_VIEW_' + dandomainjs.page.getCurrentPage().toUpperCase();
+        if(dandomainjs.events.hasOwnProperty(currentPageViewEvent)) {
+            dandomainjs.eventManager.fire(currentPageViewEvent);
+        }
+
+        if(window.AddedToBasketMessageTriggered) {
+            dandomainjs.eventManager.fire(dandomainjs.events.ADD_TO_CART);
+        }
+    });
 
     window.dandomainjs = dandomainjs;
 })(jQuery, window);
