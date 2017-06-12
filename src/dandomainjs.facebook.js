@@ -32,6 +32,7 @@
                         currency: dandomainjs.getters.currency()
                     };
                 }
+                dandomainjs.log('Facebook: Purchase method called with data:', data);
                 dandomainjs.facebook.pushEvent('Purchase', data);
             },
             search: function (data) {
@@ -76,10 +77,13 @@
                 console.error('No event supplied');
                 return false;
             }
+            dandomainjs.log("Facebook: Event '" + event + "' fired with data:", data);
             dandomainjs.eventManager.fire(dandomainjs.events.FACEBOOK_PRE_PUSH, [event, data]);
             if(window.hasOwnProperty('fbq')) {
+                dandomainjs.log("fbq('track', '" + event + "', data) called where data is:", data);
                 fbq('track', event, data);
             } else {
+                dandomainjs.log('fbq is not set on window object');
                 initQueue();
                 queue.push({
                     event: event,
@@ -103,6 +107,7 @@
 
     var queue, interval;
     function initQueue() {
+        dandomainjs.log('initQueue called');
         if(interval !== undefined) {
             return;
         }
@@ -120,6 +125,7 @@
             }
 
             var eventObj = queue.shift();
+            dandomainjs.log('An event object is shifted off the array with this data:', eventObj);
             fbq('track', eventObj.event, eventObj.data);
         }, 500);
     }

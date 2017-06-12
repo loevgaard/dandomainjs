@@ -4,6 +4,7 @@
     var dandomainjs = {};
 
     dandomainjs.languageIdToCurrency = {};
+    dandomainjs.debug = false;
 
     dandomainjs.init = function(options) {
         if(options) {
@@ -281,6 +282,8 @@
                 this.listeners[name] = [];
             }
 
+            dandomainjs.log('Listener added to event: ' + name);
+
             this.listeners[name].push(fn);
         },
         // @todo implement removeListener method
@@ -289,9 +292,20 @@
                 return;
             }
 
+            dandomainjs.log("Event '" + name + "' fired with arguments:", args);
+
             this.listeners[name].forEach(function (listener) {
                 listener.apply(window, args || []);
             });
+        }
+    };
+
+    dandomainjs.log = function (message, data) {
+        if(this.debug) {
+            console.info('[dandomainjs] ' + message);
+            if(data) {
+                console.info(data);
+            }
         }
     };
 

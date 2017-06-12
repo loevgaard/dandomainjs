@@ -1,13 +1,10 @@
-# dandomainjs - A library making things easier on the Dandomain webshop
+# dandomainjs - A library for making things easier on the Dandomain webshop
 
 [![Software License][ico-license]](LICENSE)
 
 The intention of this library is make common tasks easy to accomplish, i.e. facebook tracking, ecommerce tracking.
 
 It includes some nice utilities also that eases your javascripting with the Dandomain platform.
-
-## Structure
-The source files are located in the `src` folder, and the tests are located in `tests`
 
 ## Install
 Install using bower.io:
