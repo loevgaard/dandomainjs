@@ -199,7 +199,7 @@
             if(!url) {
                 url = window.location.href;
             }
-            return url.match(/\-[0-9]+p\.html/i) !== null;
+            return url.match(/-[0-9]+p\.html/i) !== null;
         },
 
         /**
@@ -222,7 +222,7 @@
             if(!url) {
                 url = window.location.href;
             }
-            return url.match(/\-[0-9]+s|c[0-9]+\.html/i) !== null;
+            return url.match(/-[0-9]+s|c[0-9]+\.html/i) !== null;
         },
 
         /**
@@ -235,7 +235,7 @@
             if(!url) {
                 url = window.location.href;
             }
-            return url.match(/search\-[0-9]+\.html/i) !== null;
+            return url.match(/search-[0-9]+\.html/i) !== null;
         },
 
         /**
@@ -277,6 +277,7 @@
 
     dandomainjs.eventManager = {
         listeners: {},
+        eventsFired: [],
         addListener: function (name, fn) {
             if(!this.listeners.hasOwnProperty(name)) {
                 this.listeners[name] = [];
@@ -285,9 +286,25 @@
             dandomainjs.log('Listener added to event: ' + name);
 
             this.listeners[name].push(fn);
+
+            // fire old events to this listener
+            this.eventsFired.forEach(function (event) {
+                if(name !== event.name) {
+                    return false;
+                }
+
+                fn.apply(window, event.args || []);
+
+                dandomainjs.log("Event '" + name + "' fired with arguments:", event.args);
+            });
         },
         // @todo implement removeListener method
         fire: function (name, args) {
+            this.eventsFired.push({
+                name: name,
+                args: args
+            });
+
             if(!this.listeners.hasOwnProperty(name)) {
                 return;
             }
